@@ -1,1 +1,16 @@
-empty
+<!DOCTYPE html>
+<html lang="en">
+<%- include(`${partials}/head`); -%>
+
+<body>
+<%- include(`${partials}/header_main`); -%>
+<pre id="log">
+*************** 👨‍🌾 UNOFFICIAL SOY.FINANCE FARMING CALCULATOR 👨‍🌾 ***************
+INFO  : https://soy.finance
+*************************************************************************************
+
+</pre>
+<div class="loader--1"></div>
+<%- include(`${partials}/scripts`, {scriptname: 'callisto_soy'}); -%>
+</body>
+</html> 
