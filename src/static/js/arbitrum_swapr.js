@@ -6,36 +6,32 @@ $(function() {
 
   SwaprStakingAddresses = [
     {
-    "id": "0x126b6a51d04b56f7d8528bf8b26ade0a4b3d9b6a"
+    "id": "0x0c7ee0d04472adcef96d8f96d8bc30b40427c5c4"
     },    {
-    "id": "0x2310ae88fcf850e2d22f5432d40bf477674a3fe1"
+    "id": "0x144a96dd4e76a492e8b8a136f10a2d4f9fb95d22"
     },    {
-    "id": "0x2327484ec1ca260f9193e79640df94b8c64360fd"
+    "id": "0x3b40ba93160608f806a50ef665baf4b1ab733367"
     },    {
-    "id": "0x2e6413ec518990baa72dff2ad0e64dfdf28e88c7"
+    "id": "0x439a1b13c96a06906d0b7f53259d97d3f2ed9961"
     },    {
-    "id": "0x37d38849c555e8afb52fe1e868f28a7ef90b744e"
+    "id": "0x5c4d0b606799433d9601e62087dad8d573907548"
     },    {
-    "id": "0x418a639f01faee054d3a823c227c7dc179c209fa"
+    "id": "0x66a96fc465c60920f176917c2092c236a503a1f8"
     },    {
-    "id": "0x437c9e69a1e5061042f66bc5b9250149acb62fe8"
+    "id": "0x87929482dce0455671614958d3c195165c71cd19"
     },    {
-    "id": "0x503c0ab69cb0d96c94de7affd2da6cb108ba63df"
+    "id": "0x8a85170e1429d065c1e55c5f53139a4f5bcd614a"
     },    {
-    "id": "0x556d7648b679cf9123f3f131993a50cc3fe23918"
+    "id": "0x8c969b9c63821585611fb88039ecc23586b1bbed"
     },    {
-    "id": "0x6867ecd458a435de9ef662603fd607409784e525"
+    "id": "0x959669893df2eb27b2ef43a5432896c32c30adac"
     },    {
-    "id": "0x84486b7af63b12126cb8d7db61da5749cdfdd8bb"
+    "id": "0xc09f6e813e0a064b333c4a33609da12833980ecd"
     },    {
-    "id": "0x8e1739d03c2fee646df8622371032e8523962847"
+    "id": "0xcfa751f38fcf66344a040201ee8ba34151fa6238"
     },    {
-    "id": "0x9e3370c65392a5b08e9758a3162ad03f5ef271b7"
-    },    {
-    "id": "0xa70d2eda44189b7482155797576d99b11003668f"
-    },    {
-    "id": "0xac18097fbf6b5919bef16b88848b7c3bf4f92a46"
-    },
+    "id": "0xe64f6007591f2d287cb75732de33b27933fde4a4"
+    }
   ]
   async function main() {
     const App = await init_ethers();

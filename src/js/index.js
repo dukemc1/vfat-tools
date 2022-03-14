@@ -76,6 +76,21 @@ window.NETWORKS = {
       "https://moonbeam.network/networks/moonriver/"
     ]
   },
+  MOONBEAM: {
+    "chainId": "0x504",
+    "chainName": "Moonbeam",
+    "nativeCurrency": {
+      "name": "moonbeam",
+      "symbol": "GLMR",
+      "decimals": 18
+    },
+    "rpcUrls": [
+      "https://rpc.api.moonbeam.network"
+    ],
+    "blockExplorerUrls": [
+      "https://moonscan.io/"
+    ]
+  },
   OPTIMISM: {
     "chainId": "0xA",
     "chainName": "Optimistic Ethereum",
@@ -89,6 +104,21 @@ window.NETWORKS = {
     ],
     "blockExplorerUrls": [
       "https://optimistic.etherscan.io/"
+    ]
+  },
+  EMERALD: {
+    "chainId": "0xA516",
+    "chainName": "Emerald Paratime Mainnet",
+    "nativeCurrency": {
+      "name": "oasis-network",
+      "symbol": "ROSE",
+      "decimals": 18
+    },
+    "rpcUrls": [
+      "https://emerald.oasis.dev"
+    ],
+    "blockExplorerUrls": [
+      "https://explorer.emerald.oasis.dev"
     ]
   },
   BINANCE_SMART_CHAIN: {
@@ -167,7 +197,7 @@ window.NETWORKS = {
       "https://backup-explorer.matic.network"
     ]
   },
-  XDAI: {
+  GNOSIS: {
     "chainId": "0x64",
     "chainName": "xDAI Chain",
     "nativeCurrency": {
@@ -217,6 +247,51 @@ window.NETWORKS = {
     ],
     "blockExplorerUrls": [
       "https://ftmscan.com"
+    ],
+  },
+  VELAS: {
+    "chainId": "0x6A",
+    "chainName": "Velas EVM",
+    "nativeCurrency": {
+      "name": "Velas",
+      "symbol": "VLX",
+      "decimals": 18
+    },
+    "rpcUrls": [
+      "https://evmexplorer.velas.com/rpc"
+    ],
+    "blockExplorerUrls": [
+      "https://evmexplorer.velas.com"
+    ],
+  },
+  AURORA: {
+    "chainId": "0x4E454152",
+    "chainName": "Aurora MainNet",
+    "nativeCurrency": {
+      "name": "aave-eth-v1",
+      "symbol": "aETH",
+      "decimals": 18
+    },
+    "rpcUrls": [
+      "https://mainnet.aurora.dev"
+    ],
+    "blockExplorerUrls": [
+      "https://evmexplorer.velas.com"
+    ],
+  },
+  BOBA: {
+    "chainId": "0x120",
+    "chainName": "Boba Network",
+    "nativeCurrency": {
+      "name": "ethereum",
+      "symbol": "ETH",
+      "decimals": 18
+    },
+    "rpcUrls": [
+      "https://mainnet.boba.network/"
+    ],
+    "blockExplorerUrls": [
+      "https://blockexplorer.boba.network"
     ],
   },
   HARMONY_S0: {
@@ -292,6 +367,21 @@ window.NETWORKS = {
     ],
     "blockExplorerUrls": [
       "https://explorer.fuse.io"
+    ]
+  },
+  CRONOS: {
+    "chainId": "0x19",
+    "chainName": "Cronos Mainnet",
+    "nativeCurrency": {
+      "name": "CRO",
+      "symbol": "CRO",
+      "decimals": 18
+    },
+    "rpcUrls": [
+      "https://rpc.crodex.app/"
+    ],
+    "blockExplorerUrls": [
+      "https://cronos.crypto.org/explorer"
     ]
   },
   THUNDERCORE: {
@@ -388,6 +478,66 @@ window.NETWORKS = {
       "https://smartscan.cash"
     ],
   },
+  POLIS: {
+    "chainId": "0x518AF",
+    "chainName": "Polis Olympus Chain",
+    "nativeCurrency": {
+      "name": "Polis",
+      "symbol": "POLIS",
+      "decimals": 18
+    },
+    "rpcUrls": [
+      "https://rpc.polis.tech"
+    ],
+    "blockExplorerUrls": [
+      "https://explorer.polis.tech"
+    ],
+  },
+  METIS: {
+    "chainId": "0x440",
+    "chainName": "Metis Mainnet",
+    "nativeCurrency": {
+      "name": "Metis",
+      "symbol": "METIS",
+      "decimals": 18
+    },
+    "rpcUrls": [
+      "https://andromeda.metis.io/?owner=1088"
+    ],
+    "blockExplorerUrls": [
+      "https://andromeda-explorer.metis.io/"
+    ],
+  },
+  METER: {
+    "chainId": "0x52",
+    "chainName": "Meter Mainnet",
+    "nativeCurrency": {
+      "name": "Meter token",
+      "symbol": "MTR",
+      "decimals": 18
+    },
+    "rpcUrls": [
+      "https://rpc.meter.io"
+    ],
+    "blockExplorerUrls": [
+      "https://scan.meter.io"
+    ],
+  },
+  TELOS: {
+    "chainId": "0x28",
+    "chainName": "Telos EVM Mainnet",
+    "nativeCurrency": {
+      "name": "Telos",
+      "symbol": "TLOS",
+      "decimals": 18
+    },
+    "rpcUrls": [
+      "https://mainnet.telos.net/evm"
+    ],
+    "blockExplorerUrls": [
+      "https://teloscan.io"
+    ],
+  },
 }
 
 const infuraId = atob(window.ETHEREUM_NODE_URL).split('/').pop()
@@ -414,7 +564,11 @@ const providerOptions = {
         66: "https://exchainrpc.okex.org",
         4689: "https://babel-api.mainnet.iotex.io",
         321: "https://rpc-mainnet.kcc.network",
-        10000: "https://global.uat.cash"
+        10000: "https://global.uat.cash",
+        333999: "https://rpc.polis.tech",
+        25: "https://rpc.crodex.app/",
+        82: "https://rpc.meter.io",
+        40: "https://mainnet.telos.net/evm"
       }
     }
   }

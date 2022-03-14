@@ -12,6 +12,7 @@ const ArbitrumTokens = [
     { "id": "wrapped-bitcoin","symbol": "WBTC", "contract": "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f" },
     { "id": "usd-coin","symbol": "USDC", "contract": "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8" },
     { "id": "tether","symbol": "USDT", "contract": "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9" },
+    { "id": "dai","symbol": "DAI", "contract": "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1" },
     { "id": "arbinyan","symbol": "NYAN", "contract": "0xed3fb761414da74b74f33e5c5a1f78104b188dfc" },
     { "id": "wrapped-ether", "symbol": "WETH", "contract": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"},
     { "id": "sushi", "symbol": "SUSHI", "contract": "0xd4d42F0b6DEF4CE0383636770eF773390d85c61A"},
@@ -24,7 +25,11 @@ const ArbitrumTokens = [
     { "id": "dopex", "symbol": "DPX", "contract": "0x6C2C06790b3E3E3c38e12Ee22F8183b37a13EE55"},
     { "id": "dopex-rebate-token", "symbol": "RDPX", "contract": "0x32Eb7902D4134bf98A28b963D26de779AF92A212"},
     { "id": "curve-dao-token", "symbol": "CRV", "contract": "0x11cDb42B0EB46D95f990BeDD4695A6e3fA034978"},
-    { "id": "synapse-2", "symbol": "SYN", "contract": "0x080F6AEd32Fc474DD5717105Dba5ea57268F46eb"}
+    { "id": "synapse-2", "symbol": "SYN", "contract": "0x080F6AEd32Fc474DD5717105Dba5ea57268F46eb"},
+    { "id": "pickle-finance", "symbol": "PICKLE", "contract": "0x965772e0E9c84b6f359c8597C891108DcF1c5B1A"},
+    { "id": "saddle-finance", "symbol": "SDL", "contract": "0x75c9bc761d88f70156daf83aa010e84680baf131"},
+    { "id": "frax", "symbol": "FRAX", "contract": "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F"},
+    { "id": "governance-ohm", "symbol": "gOHM", "contract": "0x8D9bA570D6cb60C7e3e0F31343Efe75AB8E65FB1"}
 ];
 
 const uniSqrtPrice = (tokenDecimals, sqrtRatioX96) => {
@@ -205,6 +210,44 @@ async function getArbitrumVault(App, vault, address, stakingAddress) {
   }
 }
 
+async function getArbitrumJar(App, jar, address, stakingAddress) {
+  const calls = [jar.decimals(), jar.token(), jar.name(), jar.symbol(), jar.totalSupply(),
+    jar.balanceOf(stakingAddress), jar.balanceOf(App.YOUR_ADDRESS), jar.balance()];
+  const [decimals, token_, name, symbol, totalSupply, staked, unstaked, balance] =
+    await App.ethcallProvider.all(calls);
+  const token = await getArbitrumToken(App, token_, address);
+  if(token.xcp_profit){ //this is only for triTokens
+    return {
+      address,
+      name,
+      symbol,
+      totalSupply : token.totalSupply,
+      decimals : token.decimals,
+      staked : staked / 10 ** decimals,
+      unstaked : unstaked / 10 ** decimals,
+      contract: jar,
+      tokens : token.tokens,
+      coins : token.coins,
+      virtualPrice : token.virtualPrice,
+      xcp_profit : token.xcp_profit
+    }
+  }else{
+    return {
+      address,
+      name,
+      symbol,
+      totalSupply,
+      decimals : decimals,
+      staked: staked / 10 ** decimals,
+      unstaked: unstaked / 10 ** decimals,
+      token: token,
+      balance : balance,
+      contract: jar,
+      tokens : [address].concat(token.tokens)
+    }
+  }
+}
+
 async function getArbitrumArbisVault(App, vault, address, stakingAddress) {
   const calls = [vault.decimals(), vault.getUnderlying(), vault.name(), vault.symbol(),
                  vault.totalSupply(), vault.balanceOf(stakingAddress),
@@ -316,9 +359,9 @@ async function getArbitrumTriCryptoToken(App, curve, address, stakingAddress, mi
   const registryAddress = "0x445FE580eF8d70FF569aB36e80c647af338db351";
   const registry = new ethcall.Contract(registryAddress, ARBITRUM_REGISTRY_ABI);
   let coins = [];
-  const [coinAddresses, coinsCount, balances] = 
-    await App.ethcallProvider.all([registry.get_coins(minterAddress), 
-                                   registry.get_n_coins(minterAddress), 
+  const [coinAddresses, coinsCount, balances] =
+    await App.ethcallProvider.all([registry.get_coins(minterAddress),
+                                   registry.get_n_coins(minterAddress),
                                    registry.get_balances(minterAddress)]);
   for(let i = 0; i < coinsCount[1]; i++){
       const token = await getArbitrumToken(App, coinAddresses[i], address);
@@ -337,7 +380,7 @@ async function getArbitrumTriCryptoToken(App, curve, address, stakingAddress, mi
       address,
       name,
       symbol,
-      totalSupply : totalSupply / 10 ** decimals,
+      totalSupply,
       decimals : decimals,
       staked:  staked / 10 ** decimals,
       unstaked: unstaked  / 10 ** decimals,
@@ -347,6 +390,29 @@ async function getArbitrumTriCryptoToken(App, curve, address, stakingAddress, mi
       virtualPrice : virtualPrice / 1e18,
       xcp_profit : xcp_profit / 10 ** decimals
   };
+}
+
+async function getArbitrumYearnVault(app, yearn, address, stakingAddress) {
+  const calls = [yearn.decimals(), yearn.token(), yearn.name(), yearn.symbol(), yearn.totalSupply(),
+    yearn.balanceOf(stakingAddress), yearn.balanceOf(app.YOUR_ADDRESS), yearn.totalAssets(), yearn.pricePerShare()];
+  const [decimals, token_, name, symbol, totalSupply, staked, unstaked, balance, ppfs] =
+    await app.ethcallProvider.all(calls);
+  const token = await getArbitrumToken(app, token_, address);
+  return {
+    address,
+    name,
+    symbol,
+    totalSupply,
+    decimals : decimals,
+    staked: staked / 10 ** decimals,
+    unstaked: unstaked / 10 ** decimals,
+    token: token,
+    balance : balance / 10 ** decimals,
+    contract: yearn,
+    tokens : [address].concat(token.tokens),
+    ppfs : ppfs / 10 ** decimals,
+    yearn : true
+  }
 }
 
 async function getArbitrumStableswapToken(App, stable, address, stakingAddress) {
@@ -370,6 +436,28 @@ async function getArbitrumStableswapToken(App, stable, address, stakingAddress) 
   };
 }
 
+async function getCArbitrumToken(App, cToken, address, stakingAddress) {
+  const calls = [cToken.decimals(), cToken.underlying(), cToken.totalSupply(),
+    cToken.name(), cToken.symbol(), cToken.balanceOf(stakingAddress),
+    cToken.balanceOf(App.YOUR_ADDRESS), cToken.exchangeRateStored()];
+  const [decimals, underlying, totalSupply, name, symbol, staked, unstaked, exchangeRate] =
+    await App.ethcallProvider.all(calls);
+  const token = await getArbitrumToken(App, underlying, address);
+  return {
+    address,
+    name,
+    symbol,
+    totalSupply,
+    decimals,
+    staked: staked / 10 ** decimals,
+    unstaked: unstaked / 10 ** decimals,
+    token: token,
+    balance: totalSupply * exchangeRate / 1e18,
+    contract: cToken,
+    tokens : [address].concat(token.tokens)
+  }
+}
+
 async function getArbitrumStoredToken(App, tokenAddress, stakingAddress, type) {
   switch (type) {
     case "uniswap":
@@ -384,6 +472,12 @@ async function getArbitrumStoredToken(App, tokenAddress, stakingAddress, type) {
     case "arbitrumArbisVault":
       const arbisVault = new ethcall.Contract(tokenAddress, ARBIS_VAULT_UNDERLYING_ABI);
       return await getArbitrumArbisVault(App, arbisVault, tokenAddress, stakingAddress);
+    case "cToken":
+      const cToken = new ethcall.Contract(tokenAddress, CTOKEN_ABI);
+      return await getCArbitrumToken(App, cToken, tokenAddress, stakingAddress);
+    case "yearn":
+      const yearnVault = new ethcall.Contract(tokenAddress, YEARN_VAULT_ABI);
+      return await getArbitrumYearnVault(App, yearnVault, tokenAddress, stakingAddress);
     case "triToken":
       const tri = new ethcall.Contract(tokenAddress, TRITOKEN_ABI);
       const [triMinter] = await App.ethcallProvider.all([tri.minter()]);
@@ -405,6 +499,9 @@ async function getArbitrumStoredToken(App, tokenAddress, stakingAddress, type) {
       const dlpPool = new ethcall.Contract(tokenAddress, ARBITRUM_DLP_ABI);
       const [originTokenAddress] = await App.ethcallProvider.all([dlpPool.originToken()]);
       return await getArbitrumDlpPool(App, dlpPool, tokenAddress, originTokenAddress, stakingAddress);
+    case "jar":
+      const jar = new ethcall.Contract(tokenAddress, JAR_ABI);
+      return await getArbitrumJar(App, jar, tokenAddress, stakingAddress);
     case "erc20":
       const erc20 = new ethcall.Contract(tokenAddress, ERC20_ABI);
       return await getErc20(App, erc20, tokenAddress, stakingAddress);
@@ -437,6 +534,24 @@ async function getArbitrumToken(App, tokenAddress, stakingAddress) {
       console.log(err)
     }
     try {
+      const cArbitrumToken = new ethcall.Contract(tokenAddress, CTOKEN_ABI);
+      const _totalBorrows = await App.ethcallProvider.all([cArbitrumToken.totalBorrows()]);
+      const res = await getCArbitrumToken(App, cArbitrumToken, tokenAddress, stakingAddress);
+      window.localStorage.setItem(tokenAddress, "cToken");
+      return res;
+    }
+    catch(err) {
+    }
+    try {
+      const yearnVault = new ethcall.Contract(tokenAddress, YEARN_VAULT_ABI);
+      const _domainSep = await App.ethcallProvider.all([yearnVault.DOMAIN_SEPARATOR()]);
+      const yearn = await getArbitrumYearnVault(App, yearnVault, tokenAddress, stakingAddress);
+      window.localStorage.setItem(tokenAddress, "yearn");
+      return yearn;
+    }
+    catch(err) {
+    }
+    try {
       const pool = new ethcall.Contract(tokenAddress, ARBITRUM_DLP_ABI);
       const [originTokenAddress] = await App.ethcallProvider.all([pool.originToken()]);
       const dlpPool = await getArbitrumDlpPool(App, pool, tokenAddress, originTokenAddress, stakingAddress);
@@ -450,7 +565,7 @@ async function getArbitrumToken(App, tokenAddress, stakingAddress) {
       const [triMinter] = await App.ethcallProvider.all([tri.minter()]);
       const minterContract = new ethcall.Contract(triMinter, TRITOKEN_MINTER_ABI);
       const [xcp_profit] = await App.ethcallProvider.all([minterContract.xcp_profit()]);
-      const res = await getArbitrumCurveToken(App, tri, tokenAddress, stakingAddress, triMinter);
+      const res = await getArbitrumTriCryptoToken(App, tri, tokenAddress, stakingAddress, triMinter);
       window.localStorage.setItem(tokenAddress, "triToken");
       return res;
     }
@@ -472,6 +587,16 @@ async function getArbitrumToken(App, tokenAddress, stakingAddress) {
       return await getArbitrumStableswapToken(App, stable, tokenAddress, stakingAddress);
     }
     catch (err) {
+    }
+    try {
+      const jar = new ethcall.Contract(tokenAddress, JAR_ABI);
+      const _token = await App.ethcallProvider.all([jar.token()]);
+      const [ratio] = await App.ethcallProvider.all([jar.getRatio()]);  //to see if its jar or a classic vault
+      const res = await getArbitrumJar(App, jar, tokenAddress, stakingAddress);
+      window.localStorage.setItem(tokenAddress, "jar");
+      return res;
+    }
+    catch(err) {
     }
     try {
       const VAULT = new ethcall.Contract(tokenAddress, ARBITRUM_VAULT_TOKEN_ABI);
@@ -868,9 +993,8 @@ const chefArbitrumContract_unstake = async function(chefAbi, chefAddress, poolIn
   const CHEF_CONTRACT = new ethers.Contract(chefAddress, chefAbi, signer)
 
   const currentStakedAmount = (await CHEF_CONTRACT.userInfo(poolIndex, App.YOUR_ADDRESS)).amount
-  const earnedTokenAmount = await CHEF_CONTRACT.callStatic[pendingRewardsFunction](poolIndex, App.YOUR_ADDRESS) / 1e18
 
-  if (earnedTokenAmount > 0) {
+  if (currentStakedAmount / 1e18 > 0) {
     showLoading()
     CHEF_CONTRACT.withdraw(poolIndex, currentStakedAmount)
       .then(function(t) {

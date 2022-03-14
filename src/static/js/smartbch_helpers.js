@@ -273,7 +273,7 @@ async function loadSmartbchSynthetixPoolInfo(App, tokens, prices, stakingAbi, st
   
   async function loadSmartbchChefContract(App, tokens, prices, chef, chefAddress, chefAbi, rewardTokenTicker,
     rewardTokenFunction, rewardsPerBlockFunction, rewardsPerWeekFixed, pendingRewardsFunction,
-    deathPoolIndices, hideFooter) {
+    deathPoolIndices, hideFooter, showTable, xSushiInfo) {
     const chefContract = chef ?? new ethers.Contract(chefAddress, chefAbi, App.provider);
   
     const poolCount = parseInt(await chefContract.poolLength(), 10);
@@ -312,11 +312,91 @@ async function loadSmartbchSynthetixPoolInfo(App, tokens, prices, stakingAbi, st
     _print("Finished reading smart contracts.\n");
   
     let aprs = []
+
+    let xSushiTableData;
+    if (xSushiInfo) {
+      const {sushiAddress, xSushiAddress, xSushiAbi, xSushiRatio, exchangeGraph, barGraph} = xSushiInfo
+
+      const xSushiContract = new ethers.Contract(xSushiAddress, xSushiAbi, App.provider);
+      const xSushiDecimals = await xSushiContract.decimals();
+      const [xSushiSymbol, totalSupply, balance ] =
+        await Promise.all([
+          xSushiContract.symbol(),
+          xSushiContract.totalSupply(),
+          xSushiContract.balanceOf(App.YOUR_ADDRESS)
+        ]);
+      const xSushiTotalSupply = totalSupply / 10 ** xSushiDecimals
+      const xSushiBalance = await balance / 10 ** xSushiDecimals;
+      const sushiPools = poolPrices.filter(val => val && (val.t0.address === sushiAddress || val.t1.address === sushiAddress))
+      const sushiPrices = sushiPools.map(val => val.t0.address === sushiAddress ? val.p0 : val.p1)
+      const average = (array) => {
+        if (!array.length)
+          return 0;
+        return array.reduce((a, b) => a + b) / array.length;
+      }
+      const sushiPrice = average(sushiPrices);
+
+      // get sushi/xsushi ratio from bar graph
+      const barResponse = await fetch(barGraph, {
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json",
+        },
+        "body": `{\"query\":\"{bar(id: \\\"${xSushiAddress.toLowerCase()}\\\") {ratio}}\"}`,
+        "method": "POST",
+      });
+      const barJson = await barResponse.json();
+      const ratio = barJson.data.bar.ratio;
+
+      // derive xsushi price
+      const xSushiPrice = sushiPrice * ratio;
+      const tvl = xSushiTotalSupply * xSushiPrice;
+
+      // get last day volume from exchange graph
+      const volumeResponse = await fetch(exchangeGraph, {
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json",
+        },
+        "body": "{\"query\":\"query volume {\\n  dayDatas(first: 100, skip: 1, orderBy: date, orderDirection: desc) {\\n     volumeUSD\\n  }\\n}\",\"variables\":null,\"operationName\":\"volume\"}",
+        "method": "POST",
+      });
+      const volumeJson = await volumeResponse.json();
+      const volumes = volumeJson.data.dayDatas.map(val => val.volumeUSD);
+      const apr = ((volumes[0] * xSushiRatio / xSushiTotalSupply) * 365) / xSushiPrice;
+
+      _print(`----------------------------------------------------------------`);
+      _print(`Bar Staking Contract: ${xSushiSymbol} (${xSushiAddress})`);
+      _print(`Price: $${formatMoney(xSushiPrice, 3)} TVL: $${formatMoney(tvl)} Total Supply: ${xSushiTotalSupply.toFixed(2)}`);
+      _print(`APR: Day ${(apr / 364).toFixed(3)}% Week ${(apr / 52).toFixed(2)}% Year ${(apr).toFixed(2)}%`);
+      _print(`You are staking ${xSushiBalance.toFixed(2)} ${xSushiSymbol} ($${formatMoney(xSushiBalance * xSushiPrice)}), ${(100 * xSushiBalance/xSushiTotalSupply).toFixed(2)}% of the pool.`);
+      _print(`----------------------------------------------------------------`);
+      _print(``);
+
+      aprs.push({
+        userStakedUsd: xSushiBalance * xSushiPrice,
+        totalStakedUsd: xSushiTotalSupply * xSushiPrice,
+        userStakedPct: xSushiBalance / xSushiTotalSupply,
+        yearlyAPR: apr,
+        userYearlyUsd: xSushiBalance * xSushiPrice * apr
+      });
+
+      xSushiTableData = [
+        "",
+        xSushiSymbol,
+        xSushiTotalSupply.toFixed(2),
+        `$${formatMoney(xSushiTotalSupply * xSushiPrice)}`,
+        xSushiSymbol,
+        `${(apr).toFixed(2)}%`,
+        `${xSushiBalance.toFixed(2)} ($${formatMoney(xSushiBalance * xSushiPrice)}), ${(100 * xSushiBalance/xSushiTotalSupply).toFixed(2)}%`,
+      ]
+    }
+
     for (i = 0; i < poolCount; i++) {
       if (poolPrices[i]) {
         const apr = printChefPool(App, chefAbi, chefAddress, prices, tokens, poolInfos[i], i, poolPrices[i],
           totalAllocPoints, rewardsPerWeek, rewardTokenTicker, rewardTokenAddress,
-          pendingRewardsFunction, null, null, "bsc")
+          pendingRewardsFunction, null, null, "smartbch")
         aprs.push(apr);
       }
     }
@@ -342,10 +422,91 @@ async function loadSmartbchSynthetixPoolInfo(App, tokens, prices, stakingAbi, st
             + ` Year $${formatMoney(totalUserStaked*averageApr)}\n`);
       }
     }
-  
+
+    if (showTable) {
+      let tableData = {
+        "title": rewardTokenTicker,
+        "heading": [
+          "#",
+          "Pair",
+          "Total Staked",
+          "Total $ Staked",
+          "Reward",
+          "APR",
+          "My Stake",
+        ],
+        "rows": []
+      }
+
+      if (xSushiTableData) {
+        tableData.rows.push(xSushiTableData)
+      }
+
+      for (let i = 0; i < poolCount; i++) {
+        if (poolPrices[i]) {
+          let pool = buildChefPool(App, chefAbi, chefAddress, prices, tokens, poolInfos[i], i, poolPrices[i],
+            totalAllocPoints, rewardsPerWeek, rewardTokenTicker, rewardTokenAddress,
+            pendingRewardsFunction)
+
+          if (pool) {
+            tableData.rows.push([
+              _build_link(`${i}`, () => {
+                document.getElementById("pool-details-modal").style.display = 'block'
+
+                let table = new AsciiTable();
+
+                let tableData = {
+                  "title": pool.pair_link,
+                  "rows": []
+                }
+                table.addRow(["Pair", pool.pair_link])
+                table.addRow(["TVL", pool.tvl])
+
+                if (pool.add_liquidity_link) {
+                  table.addRow(["Add Liquidity", pool.add_liquidity_link])
+                  table.addRow(["Remove Liquidity", pool.remove_liquidity_link])
+                  table.addRow(["Swap", pool.swap_link])
+                  table.addRow([`${pool.token0} Price`, pool.price0])
+                  table.addRow([`${pool.token1} Price`, pool.price1])
+                }
+
+                table.addRow([`${pool.reward_token} Weekly rewards`, pool.weekly_rewards])
+                table.addRow(["Total staked", `${pool.total_staked} (${pool.total_staked_dollars})`])
+                table.addRow(["My stake", pool.user_stake])
+                table.addRow(["DPR", pool.dpr])
+                table.addRow(["WPR", pool.wpr])
+                table.addRow(["APR", pool.apr])
+                table.addRow(["Stake", pool.stake])
+                table.addRow(["Unstake", pool.unstake])
+                table.addRow(["Claim", pool.claim])
+
+                document.getElementById('pool-details-content').innerHTML += table + '<br />';
+
+              }),
+              _truncate_link(pool.pair_link.replace(/\u0000/g,""), 30),
+              pool.total_staked,
+              pool.total_staked_dollars,
+              pool.reward_token,
+              pool.apr,
+              pool.user_stake,
+            ])
+          }
+        }
+      }
+
+      let table = new AsciiTable().fromJSON(tableData);
+      table
+        .setAlign(0, AsciiTable.RIGHT)
+        .setAlign(2, AsciiTable.RIGHT)
+        .setAlign(3, AsciiTable.RIGHT)
+        .setAlign(5, AsciiTable.RIGHT)
+
+      document.getElementById('log').innerHTML += table + '<br />';
+    }
+
     return { prices, totalUserStaked, totalStaked, averageApr }
   }
-  
+
   async function loadMultipleSmartbchSynthetixPools(App, tokens, prices, pools) {
     let totalStaked  = 0, totalUserStaked = 0, individualAPRs = [];
     const infos = await Promise.all(pools.map(p =>
@@ -376,4 +537,3 @@ async function loadSmartbchSynthetixPoolInfo(App, tokens, prices, stakingAbi, st
     let totalApr = totalUserStaked == 0 ? 0 : individualAPRs.reduce((x,y)=>x+y, 0) / totalUserStaked;
     return { staked_tvl : totalStaked, totalUserStaked, totalApr };
   }
-  
