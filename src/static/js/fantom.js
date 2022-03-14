@@ -189,7 +189,7 @@ const main = async () => {
       ['LIFE               ', `<a href='life'         >Various</a>`, 'LIFE         ', 'https://lif3.exchange'],
       ['JetMine            ', `<a href='jetmine'      >Various</a>`, 'JETMINE      ', 'https://jetmine.defiwaterfall.com'],
       ['Hamster            ', `<a href='hamster'      >Various</a>`, 'HAM / HSHARE ', 'https://hamster.money']
-
+      ['Zombfinance        ', `<a href='zomb'         >Various</a>`, 'ZOMB / ZSHARE ', 'https://zombfinance.com']
     ],
   }
 
