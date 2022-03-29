@@ -24,7 +24,7 @@ const main = async () => {
       ['Waka               ', `<a href='waka'         >Various</a>`, 'WAKA         ', 'https://waka.finance'],
       ['Elk                ', `<a href='elk'          >Various</a>`, 'ELK          ', 'https://app.elk.finance'],
       ['Paintswap          ', `<a href='paintswap'    >Various</a>`, 'BRUSH        ', 'https://paintswap.finance'],
-      ['Tomb               ', `<a href='tomb'         >Various</a>`, 'TOMB         ', 'https://tomb.finance'],
+      ['Tomb               ', `<a href='tomb'         >Various</a>`, 'TOMB         ', 'https://tomb.com'],
       ['Shadow             ', `<a href='shadow'       >Various</a>`, 'SHADOW       ', 'https://shadowswap.app'],
       ['Borgswap           ', `<a href='borgswap'     >Various</a>`, 'KLING        ', 'https://klingftm.borgswap.exchange'],
       ['Opera              ', `<a href='opera'        >Various</a>`, 'OPERA        ', 'https://www.operaswap.finance'],
@@ -108,7 +108,7 @@ const main = async () => {
       ['Babypig Finance    ', `<a href="babypig"      >Various</a>`, 'fBABYPIG     ', 'https://babypig.finance'],
       ['Draco Force        ', `<a href="dracoforce"   >Various</a>`, 'DRC          ', 'https://dracoforce.com'],
       ['Smurf Clever       ', `<a href="smurf"        >Various</a>`, 'CLEVER       ', 'https://smurf.money'],
-      ['Hundred *          ', `<a href="hundred"      >Various</a>`, 'HND          ', 'https://hundred.finance'],
+      ['Hundred            ', `<a href="hundred"      >Various</a>`, 'HND          ', 'https://hundred.finance'],
       ['FantomPup          ', `<a href="fantompup"    >Various</a>`, 'PUP          ', 'https://fantompup.finance'],
       ['UndeadFinance      ', `<a href="undeadfinance">Various</a>`, 'UNDEAD       ', 'https://undeadfinance.com'],
       ['FanTerra           ', `<a href="fanterra"     >Various</a>`, 'FANTERRA     ', 'https://app.fanterra.finance'],
@@ -188,10 +188,18 @@ const main = async () => {
       ['Zomb2              ', `<a href='zomb2'        >Various</a>`, 'ZOMB2        ', 'https://zomb2.finance/'],
       ['LIFE               ', `<a href='life'         >Various</a>`, 'LIFE         ', 'https://lif3.exchange'],
       ['JetMine            ', `<a href='jetmine'      >Various</a>`, 'JETMINE      ', 'https://jetmine.defiwaterfall.com'],
-      ['Hamster            ', `<a href='hamster'      >Various</a>`, 'HAM / HSHARE ', 'https://hamster.money'],
+      ['Hamster *          ', `<a href='hamster'      >Various</a>`, 'HAM / HSHARE ', 'https://hamster.money'],
       ['YieldWolf          ', `<a href='yieldwolf'    >Various</a>`, 'Various      ', 'https://yieldwolf.finance'],
-      ['Zomb Finance       ', `<a href='zombfinance'  >Various</a>`, 'ZOMB / ZSHARE', 'https://zombfinance.com']
-
+      ['Zomb Finance       ', `<a href='zombfinance'  >Various</a>`, 'ZOMB / ZSHARE', 'https://zombfinance.com'],
+      ['Lendly (Hundred Finance)', `<a href='lendly'  >Various</a>`, 'HND          ', 'https://lendly.dashboard.hundred.finance'],
+      ['Philetairus socius ', `<a href='philetairussocius'>Various</a>`, 'SOCIUS   ', 'https://www.philetairus-socius.com'],
+      ['Excalibur          ', `<a href='excalibur'    >Various</a>`, 'EXC          ', 'https://app.excalibur.exchange'],
+      ['Stargate           ', `<a href='stargate'     >Various</a>`, 'STG          ', 'https://stargate.finance'],
+      ['Alternates (Layer 1)',`<a href='alternates1'  >Various</a>`, 'ALT / ASHARE ', 'https://alt1.alternates.finance'],
+      ['Alternates (Layer 2)',`<a href='alternates2'  >Various</a>`, 'ALT2 / ASHARE2','https://alt2.alternates.finance'],
+      ['Sturdy             ', `<a href='sturdy'       >Various</a>`, '             ', 'https://app.sturdy.finance'],
+      ['Wooden Finance     ', `<a href='woodenfinance'>Various</a>`, 'WOOD / wTRUNK', 'https://wooden.finance'],
+      ['Piggy Finance      ', `<a href='piggyfinance' >Various</a>`, 'PSHARE / TPIGGY', 'https://ftm.piggyfinance.io']
     ],
   }
 

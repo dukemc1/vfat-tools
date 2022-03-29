@@ -1545,6 +1545,43 @@ async function getIronBankToken(app, ibToken, address, stakingAddress) {
   }
 }
 
+async function getTriCryptoToken(app, curve, address, stakingAddress, minterAddress) {
+  const minter = new ethcall.Contract(minterAddress, TRITOKEN_MINTER_ABI)
+  let coins = [], coinAddresses = [], balances = [];
+  for(let i = 0; i < 3; i++){
+    const [coinAddress, balance] = await app.ethcallProvider.all([minter.coins(i), minter.balances(i)])
+    coinAddresses.push(coinAddress);
+    balances.push(balance);
+  }
+  for(let i = 0; i < 3; i++){
+      const token = await getToken(app, coinAddresses[i], address);
+      coins.push(
+        {address : coinAddresses[i],
+         token   : token,
+         balance : balances[i] / 10 ** token.decimals}
+      )
+    }
+  const [virtualPrice, xcp_profit] = await app.ethcallProvider.all([minter.get_virtual_price(), minter.xcp_profit()]);
+  const calls = [curve.decimals(), curve.balanceOf(stakingAddress), curve.balanceOf(app.YOUR_ADDRESS),
+    curve.name(), curve.symbol(), curve.totalSupply()];
+  const [decimals, staked, unstaked, name, symbol, totalSupply] = await app.ethcallProvider.all(calls);
+  const tokens = coins.map(c => c.address).concat([address]);
+  return {
+      address,
+      name,
+      symbol,
+      totalSupply,
+      decimals : decimals,
+      staked:  staked / 10 ** decimals,
+      unstaked: unstaked  / 10 ** decimals,
+      contract: curve,
+      tokens,
+      coins,
+      virtualPrice : virtualPrice / 1e18,
+      xcp_profit : xcp_profit / 10 ** decimals
+  };
+}
+
 async function getStoredToken(app, tokenAddress, stakingAddress, type) {
   switch (type) {
     case "uniswap":
@@ -1553,6 +1590,10 @@ async function getStoredToken(app, tokenAddress, stakingAddress, type) {
     case "lixir":
       const lixirPool = new ethcall.Contract(tokenAddress, LIXIR_TOKEN_ABI);
       return await getLixirPool(app, lixirPool, tokenAddress, stakingAddress);
+    case "triToken":
+      const tri = new ethcall.Contract(tokenAddress, TRITOKEN_ABI);
+      const [triMinter] = await app.ethcallProvider.all([tri.minter()]);
+      return await getTriCryptoToken(app, tri, tokenAddress, stakingAddress, triMinter);
     case "ironBank":
       const ironBankPool = new ethcall.Contract(tokenAddress, IRONBANK_TOKEN_ABI);
       return await getIronBankToken(app, ironBankPool, tokenAddress, stakingAddress);
@@ -1660,6 +1701,17 @@ async function getToken(app, tokenAddress, stakingAddress) {
     const lixir = await getLixirPool(app, lixirPool, tokenAddress, stakingAddress);
     window.localStorage.setItem(tokenAddress, "lixir");
     return lixir;
+  }
+  catch(err) {
+  }
+  try {
+    const tri = new ethcall.Contract(tokenAddress, CURVE_ABI);
+    const [triMinter] = await app.ethcallProvider.all([tri.minter()]);
+    const minterContract = new ethcall.Contract(triMinter, TRITOKEN_MINTER_ABI);
+    const [xcp_profit] = await app.ethcallProvider.all([minterContract.xcp_profit()]);
+    const res = await getTriCryptoToken(app, tri, tokenAddress, stakingAddress, triMinter);
+    window.localStorage.setItem(tokenAddress, "triToken");
+    return res;
   }
   catch(err) {
   }
@@ -1984,6 +2036,8 @@ function getUniPrices(tokens, prices, pool, chain="eth")
   else if (pool.symbol.includes("vAMM")) stakeTokenTicker += " vAMM";
   else if (pool.symbol.includes("sAMM")) stakeTokenTicker += " sAMM";
   else if (pool.symbol.includes("Wigo-LP")) stakeTokenTicker += " Wigo-LP";
+  else if (pool.symbol.includes("DXS")) stakeTokenTicker += " DXS-LP";
+  else if (pool.symbol.includes("HAUS-LP")) stakeTokenTicker += " HAUS-LP";
   else if (pool.symbol.includes("HBLP")) stakeTokenTicker += " Huckleberry LP";
   else if (pool.symbol.includes("BLP")) stakeTokenTicker += " BLP";
   else if (pool.symbol.includes("BEAM-LP")) stakeTokenTicker += " BEAM-LP";
@@ -2002,6 +2056,7 @@ function getUniPrices(tokens, prices, pool, chain="eth")
   else if (pool.symbol.includes("DFYN")) stakeTokenTicker += " DFYN LP";
   else if (pool.symbol.includes("NMX-LP")) stakeTokenTicker += " NMX LP";
   else if (pool.symbol.includes("SPIRIT")) stakeTokenTicker += " SPIRIT LP";
+  else if (pool.symbol.includes("TOMB-V2-LP")) stakeTokenTicker += " TOMB-V2 LP";
   else if (pool.symbol.includes("spLP")) stakeTokenTicker += " SPOOKY LP";
   else if (pool.symbol.includes("Lv1")) stakeTokenTicker += " STEAK LP";
   else if (pool.symbol.includes("PLP")) stakeTokenTicker += " Pure Swap LP";
@@ -2123,11 +2178,14 @@ function getUniPrices(tokens, prices, pool, chain="eth")
               pool.name.includes("Gemkeeper LP Token") ?  `https://explorer.emerald.oasis.dev/token/${pool.address}` :
               pool.name.includes("Flare LP Token") ?  `https://analytics.solarflare.io/pairs/${pool.address}` :
               pool.symbol.includes("SCLP") ?  `https://analytics.swapperchan.com/pairs/${pool.address}` :
+              pool.symbol.includes("DXS") ?  `https://dxstats.eth.link/#/pair/${pool.address}` :
               pool.name.includes("Ubeswap") ?  `https://info.ubeswap.org/pair/${pool.address}` :
               pool.symbol.includes("Farmtom-LP") ?  `https://farmtom.com/swap` :
+              pool.symbol.includes("TOMB-V2-LP") ?  `https://swap.tomb.com/#/swap` :
               pool.name.includes("OperaSwap") ?  `https://www.operaswap.finance/` :
               pool.symbol.includes("SPIRIT") ?  `https://swap.spiritswap.finance/#/swap` :
               pool.symbol.includes("spLP") ?  `https://info.spookyswap.finance/pair/${pool.address}` :
+              pool.symbol.includes("HAUS-LP") ?  `https://app.next-gen.finance/info/pool/${pool.address}` :
               pool.symbol.includes("Lv1") ?  `https://info.steakhouse.finance/pair/${pool.address}` :
               pool.symbol.includes("JLP") ?  `https://cchain.explorer.avax.network/address/${pool.address}` :
               pool.symbol.includes("ELP") ?  `https://app.elk.finance/#/swap` :
@@ -2156,7 +2214,7 @@ function getUniPrices(tokens, prices, pool, chain="eth")
               pool.symbol.includes("JEWEL-LP") ? `https://explorer.harmony.one/address/${pool.address}`:
               pool.symbol.includes("VVS-LP") ?  `https://vvs.finance/info/farm/${pool.address}` :
               pool.symbol.includes("CNO-LP") ?  `https://chronoswap.org/info/pool/${pool.address}` :
-              pool.symbol.includes("TLP") && !pool.name.includes("Thorus LP") ?  `https://explorer.mainnet.aurora.dev/address/${pool.address}` :
+              pool.symbol.includes("TLP") && !pool.name.includes("Thorus LP") ?  `https://aurorascan.dev/address/${pool.address}` :
               pool.symbol.includes("TLP") && !pool.name.includes("Thorus LP") ?  `https://snowtrace.io/address/${pool.address}` :
               pool.symbol.includes("Crona-LP") ?  `https://app.cronaswap.org/info/${pool.address}` : //wait for real version
               pool.symbol.includes("Genesis-LP") ?  `https://app.cronaswap.org/info/${pool.address}` : //wait for real version
@@ -2230,6 +2288,21 @@ function getUniPrices(tokens, prices, pool, chain="eth")
             `https://www.huckleberry.finance/#/add/${t0address}/${t1address}`,
             `https://www.huckleberry.finance/#/remove/${t0address}/${t1address}`,
             `https://www.huckleberry.finance/#/swap?inputCurrency=${t0address}&outputCurrency=${t1address}`
+          ] :
+          pool.symbol.includes("DXS") ? [
+            `https://swapr.eth.link/#/add/${t0address}/${t1address}`,
+            `https://swapr.eth.link/#/remove/${t0address}/${t1address}`,
+            `https://swapr.eth.link/#/swap?inputCurrency=${t0address}&outputCurrency=${t1address}`
+          ] :
+          pool.symbol.includes("HAUS-LP") ? [
+            `https://app.next-gen.finance/add/${t0address}/${t1address}`,
+            `https://app.next-gen.finance/remove/${t0address}/${t1address}`,
+            `https://app.next-gen.finance/swap?inputCurrency=${t0address}&outputCurrency=${t1address}`
+          ] :
+          pool.symbol.includes("TOMB-V2-LP") ? [
+            `https://swap.tomb.com/#/add/${t0address}/${t1address}`,
+            `https://swap.tomb.com/#/remove/${t0address}/${t1address}`,
+            `https://swap.tomb.com/#/swap?inputCurrency=${t0address}&outputCurrency=${t1address}`
           ] :
           pool.symbol.includes("Wigo-LP") ? [
             `https://wigoswap.io/add/${t0address}/${t1address}`,
